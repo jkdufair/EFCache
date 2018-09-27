@@ -175,16 +175,25 @@ namespace EFCache
         {
             if (!IsCacheable)
             {
-                if (!_commandTreeFacts.IsQuery)
-                {
-                    _cacheTransactionHandler.InvalidateSets(Transaction, _commandTreeFacts.AffectedEntitySets.Select(s => s.Name),
-                        DbConnection);
-                }
+				try
+				{
+					if (!_commandTreeFacts.IsQuery)
+					{
+						_cacheTransactionHandler.InvalidateSets(Transaction, _commandTreeFacts.AffectedEntitySets.Select(s => s.Name),
+							DbConnection);
+					}
 
-                var result = _command.ExecuteReader(behavior);
+					var result = _command.ExecuteReader(behavior);
 				
-                return result;
-            }
+					return result;
+
+				}
+				catch (Exception)
+				{
+					_cacheTransactionHandler.ReleaseEntitySetResources(Transaction, DbConnection);
+					throw;
+				}
+			}
 
             var key = CreateKey();
 
@@ -216,15 +225,23 @@ namespace EFCache
 			var affectedEntitySets = _commandTreeFacts.AffectedEntitySets.Select(s => s.Name).ToList();
 			if (!IsCacheable)
             {
-				if (!_commandTreeFacts.IsQuery)
-                {
-                    _cacheTransactionHandler.InvalidateSets(Transaction, affectedEntitySets, DbConnection);
-                }
-				throw new Exception();
-                var result = await _command.ExecuteReaderAsync(behavior, cancellationToken);
+				try
+				{
+					if (!_commandTreeFacts.IsQuery)
+					{
+						_cacheTransactionHandler.InvalidateSets(Transaction, affectedEntitySets, DbConnection);
+					}
+					var result = await _command.ExecuteReaderAsync(behavior, cancellationToken);
 
-                return result;
-            }
+					return result;
+
+				}
+				catch (Exception)
+				{
+					_cacheTransactionHandler.ReleaseEntitySetResources(Transaction, DbConnection);
+					throw;
+				}
+			}
 
             var key = CreateKey();
 
@@ -325,9 +342,18 @@ namespace EFCache
         {
             if (recordsAffected > 0 && _commandTreeFacts.AffectedEntitySets.Any())
             {
-                _cacheTransactionHandler.InvalidateSets(Transaction, _commandTreeFacts.AffectedEntitySets.Select(s => s.Name),
-                    DbConnection);
-            }
+				try
+				{
+					_cacheTransactionHandler.InvalidateSets(Transaction, _commandTreeFacts.AffectedEntitySets.Select(s => s.Name),
+						DbConnection);
+
+				}
+				catch (Exception)
+				{
+					_cacheTransactionHandler.ReleaseEntitySetResources(Transaction, DbConnection);
+					throw;
+				}
+			}
         }
 
         public override object ExecuteScalar()

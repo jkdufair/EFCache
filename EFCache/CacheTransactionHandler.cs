@@ -123,25 +123,25 @@ namespace EFCache
 		
 		public void Committed(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
 		{
-			FinalizeTransaction(transaction, interceptionContext);
+			ReleaseEntitySetResources(transaction, interceptionContext.Connection);
 		}
 
-		private void FinalizeTransaction(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
+		public void ReleaseEntitySetResources(DbTransaction transaction, DbConnection dbConnection)
 		{
 			var entitySets = RemoveAffectedEntitySets(transaction);
 			if (entitySets == null) return;
 			try
 			{
-				ResolveCache(interceptionContext.Connection).InvalidateSets(entitySets.Distinct());
+				ResolveCache(dbConnection).InvalidateSets(entitySets.Distinct());
 			}
 			finally
 			{
-				if ((ResolveCache(interceptionContext.Connection) is ILockableCache))
+				if ((ResolveCache(dbConnection) is ILockableCache))
 				{
 					var lockedEntitySets = RemoveAffectedLocks(transaction);
 					if (lockedEntitySets != null)
 					{
-						ReleaseLock(lockedEntitySets, interceptionContext.Connection);
+						ReleaseLock(lockedEntitySets, dbConnection);
 					}
 				}
 			}
@@ -177,7 +177,7 @@ namespace EFCache
 
         public void RolledBack(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
         {
-			FinalizeTransaction(transaction, interceptionContext);
+			ReleaseEntitySetResources(transaction, interceptionContext.Connection);
 		}
 
         public void RollingBack(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
