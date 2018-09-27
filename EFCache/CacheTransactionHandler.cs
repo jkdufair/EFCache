@@ -122,8 +122,13 @@ namespace EFCache
 		}
 		
 		public void Committed(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
-        {
-            var entitySets = RemoveAffectedEntitySets(transaction);
+		{
+			FinalizeTransaction(transaction, interceptionContext);
+		}
+
+		private void FinalizeTransaction(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
+		{
+			var entitySets = RemoveAffectedEntitySets(transaction);
 			if (entitySets == null) return;
 			try
 			{
@@ -140,10 +145,9 @@ namespace EFCache
 					}
 				}
 			}
-
 		}
 
-        public void Committing(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
+		public void Committing(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
         {
         }
 
@@ -173,8 +177,8 @@ namespace EFCache
 
         public void RolledBack(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
         {
-            RemoveAffectedEntitySets(transaction);
-        }
+			FinalizeTransaction(transaction, interceptionContext);
+		}
 
         public void RollingBack(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
         {

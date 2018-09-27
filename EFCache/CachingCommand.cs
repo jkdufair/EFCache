@@ -220,7 +220,7 @@ namespace EFCache
                 {
                     _cacheTransactionHandler.InvalidateSets(Transaction, affectedEntitySets, DbConnection);
                 }
-
+				throw new Exception();
                 var result = await _command.ExecuteReaderAsync(behavior, cancellationToken);
 
                 return result;
