@@ -161,6 +161,7 @@ namespace EFCache
 
         public void Disposed(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
         {
+			ReleaseEntitySetResources(transaction, interceptionContext.Connection);
         }
 
         public void Disposing(DbTransaction transaction, DbTransactionInterceptionContext interceptionContext)
